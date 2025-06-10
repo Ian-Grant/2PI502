@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fonts from Hitachi HD44780U</title>
+   <STYLE>
+      .container { position: relative; }
+      .canvas { position: relative; z-index: 0; }
+      .ovcanvas { position: absolute; left: 0; top: 0; z-index: 1; }
+      table, th, td {
+         border: 1px solid black;
+         border-collapse: collapse;
+         padding: 4px;
+      }
+   </STYLE>
+</head>
+<body>
+
+<H1>Hitachi HD44780U LCD Display Module Driver</H1>
+<p>These fonts were extracted from the PDF source if the <a href="https://cdn.sparkfun.com/assets/9/5/f/7/b/HD44780.pdf">Hitachi
+HD44780U manual</a>. See, e.g. <a href="https://www.gibbard.me/hd44780_lcd_screen/">Using an HD44780 alphanumeric LCD screen</a>.</p>
+
+<p>In this document, the fonts are represented as JavaScript arrays of arrays. See <a href="HD44780U01ASCII.js">HD44780U01ASCII.js</a> and <a href="HD44780U02ASCII.js">HD44780U02ASCII.js</a>. You can create an HTML canvas element representing a given character with some code like this:</p>
+
+<pre><code>function CreateCharCanvas(pixelSize, charWidth, charHeight, bgCol, fgCol, charDots) {
+   const canvas =  document.createElement("canvas");
+   canvas.width = charWidth * pixelSize;
+   canvas.height = charHeight * pixelSize;
+   const ctx = canvas.getContext("2d");
+   ctx.fillStyle = bgCol;
+   ctx.fillRect(0, 0, canvas.width, canvas.height);
+   ctx.fillStyle = fgCol;
+   for (var i = 0; i < charHeight; i++) {
+      for (j = 0; j < charWidth; j++) {
+         if ((charDots[i] >> (charWidth - j - 1)) & 1) {
+            ctx.fillRect(j * pixelSize, i * pixelSize, pixelSize - 1, pixelSize - 1);
+         }
+      }
+   }
+   return canvas;
+}
+</code></pre>
+<p>Call it like this:</p>
+<pre><code>const canvas = CreateCharCanvas(8, 5, 10, "rgb(0 165 0 / 25%)", "rgb(0 42 0)", HD44780U01ASCII[0x5c]);
+</code></pre>
+
+<H2>Page 17</H2>
+<image src="LCDFont1.png">
+<div id="font17table"></div>
+
+
+<H2>Page 18</H2>
+<image src="LCDFont2.png">
+<div id="font18table"></div>
+
+<script src="HD44780U02ASCII.js"></script>
+<script src="HD44780U01ASCII.js"></script>
+
+<script>
+ASCIICCodes = 
+   ["NUL","SOH","STX","ETX","EOT","ENQ","ACK","BEL","BS", "HT", "LF", "VT", "FF","CR","SO","SI",
+    "DLE","DC1","DC2","DC3","DC4","NAK","SYN","ETB","CAN","EM","SUB","ESC", "FS","GS","RS","US"];
+
+function CreateCharCanvas(pixelSize, charWidth, charHeight, bgCol, fgCol, charDots) {
+   const canvas =  document.createElement("canvas");
+   canvas.width = charWidth * pixelSize;
+   canvas.height = charHeight * pixelSize;
+   const ctx = canvas.getContext("2d");
+   ctx.fillStyle = bgCol;
+   ctx.fillRect(0, 0, canvas.width, canvas.height);
+   ctx.fillStyle = fgCol;
+   for (var i = 0; i < charHeight; i++) {
+      for (j = 0; j < charWidth; j++) {
+         if ((charDots[i] >> (charWidth - j - 1)) & 1) {
+            ctx.fillRect(j * pixelSize, i * pixelSize, pixelSize - 1, pixelSize - 1);
+         }
+      }
+   }
+   return canvas;
+}
+
+function CreateTable(tableEltId, charWidth, charHeight, pixelSize, bgCol, fgCol, font) {
+   const container = document.getElementById(tableEltId);
+   const table = document.createElement("table");
+   for (var i = -1; i < font.length / 16; i++) {
+      var row = document.createElement("tr");
+      for (var j = -1; j < 16; j++) {
+         if (i >= 0 && j >= 0) {
+            var td = document.createElement("td");
+            td.setAttribute("style","vertical-align: middle;");
+            const glyphIdx = i * 16 + j;
+            const glyph = font[glyphIdx];
+            if (typeof glyph !== 'undefined') {
+               const canvas = CreateCharCanvas(pixelSize, charWidth, charHeight, bgCol, fgCol, glyph);
+               td.appendChild(canvas);
+            } else {
+               td.innerHTML = `<span style="font-size: 80%">${ASCIICCodes[glyphIdx]}</span>`;
+               td.setAttribute("style", "text-align: center; height: "+pixelSize*charHeight+"px"); 
+            }
+            row.appendChild(td);
+         } else {
+           var th = document.createElement("th");
+           if (j >= 0) {
+              th.innerHTML = `<span style="font-size: 100%">${j.toString(16).toUpperCase()}</span>`;
+           } else {
+              th.setAttribute("style", "width: 2em;"); 
+              if (i >= 0) {
+                 th.innerHTML = `<span style="font-size: 100%">${i.toString(16).toUpperCase()}</span>`;
+              }
+           }
+           row.appendChild(th);
+         }
+      }
+      table.appendChild(row);
+   }
+   container.appendChild(table);
+}
+
+CreateTable("font17table", 5, 10, 5, "rgb(0 165 0 / 25%)", "rgb(0 42 0)", HD44780U01ASCII);
+  
+CreateTable("font18table", 5, 8, 5, "rgb(0 0 165 / 25%)", "rgb(0 0 42)", HD44780U02ASCII);
+</script>
+</body>
+</html>
